@@ -143,8 +143,7 @@ pub fn screen_test(){
 pub fn row_test(){
 
     let size = terminal_size();
-    if let Some((Width(w), Height(h))) = size {
-        let height = h;
+    if let Some((Width(w), Height(_h))) = size {
         let width = w;
         for x in 0..(width/2) {
             let mut rng = rand::thread_rng();
@@ -315,28 +314,3 @@ pub fn d2_path(a_x: f64, a_y: f64, b_x: f64, b_y: f64, color: Color, centered: b
     }
     
 }
-
-fn calculate_angle(start: (f64, f64), end: (f64, f64)) -> f64 {
-    let delta_x = end.0 - start.0;
-    let delta_y = end.1 - start.1;
-    let angle_radians = delta_y.atan2(delta_x);
-    let angle_degrees = angle_radians.to_degrees();
-    let rounded_angle_degrees = (angle_degrees / 45.0).round() * 45.0;
-    rounded_angle_degrees
-}
-
-fn find_closest_point(target_point: (f64, f64), points: [(f64, f64); 8]) -> (f64, f64) {
-    let mut min_distance = f64::INFINITY;
-    let mut closest_point = points[0];
-
-    for &point in points.iter() {
-        let distance = ((point.0 - target_point.0).powi(2) + (point.1 - target_point.1).powi(2)).sqrt();
-        if distance < min_distance {
-            min_distance = distance;
-            closest_point = point;
-        }
-    }
-
-    closest_point
-}
-
