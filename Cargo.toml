@@ -2,7 +2,7 @@
 name = "trender"
 version = "0.0.1"
 edition = "2021"
-license = "LICENCE-MIT"
+license = "MIT"
 description = "Simple graphics library for the terminal"
 homepage = "https://github.com/Forged-Dyslexic/trender"
 documentation = "https://github.com/Forged-Dyslexic/trender/wiki"
