@@ -1,5 +1,5 @@
 //! This is a simple(ish) graphics library that runs in the terminal.
-
+#![allow(warnings)]
 use std::process::Command;
 use rand::Rng;
 use crossterm::{cursor, execute, style::{Color, Print, ResetColor, SetBackgroundColor}};
