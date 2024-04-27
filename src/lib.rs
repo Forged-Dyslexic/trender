@@ -1,3 +1,5 @@
+//! This is a simple(ish) graphics library that runs in the terminal.
+
 use std::process::Command;
 use rand::Rng;
 use crossterm::{cursor, execute, style::{Color, Print, ResetColor, SetBackgroundColor}};
@@ -244,7 +246,7 @@ impl FCenter for f64 {
 pub fn clear(){
     //! clears the terminal
     //! -----
-    //! 
+    //! Call ```clear()``` to wipe the terminal clear!
     let _ = Command::new("clear").status();
 }
 
@@ -276,7 +278,9 @@ pub fn d2_map(cords: &[(f64, f64)]) {
 pub fn d2_path(points: &[((f64,f64),(f64,f64))], color: Color) {
     //! Draws a 2d line on the terminal
     //! -----
-    //! d2_path(points: &[((1,0,1.0),(5.0,5.0)),((5,0,5.0),(2.0,5.0))])
+    //! This draws a path from 2 points utilizing the pixel function
+    //! 
+    //! ```d2_path(points: &[((1,0,1.0),(5.0,5.0)),((5,0,5.0),(2.0,5.0))])```
 
     for points in points{
         let a_x = points.0.0;
@@ -317,12 +321,14 @@ pub fn d2_path(points: &[((f64,f64),(f64,f64))], color: Color) {
 
 
 struct Camera {
+    // This portion of Trender is still Underconstruction.
     position: (f64, f64, f64),
     direction: (f64, f64, f64),
     fov: f64, // Field of view in degrees
 }
 
 impl Camera {
+    // This portion of Trender is still Underconstruction.
     fn project_point(&self, point: (f64, f64, f64)) -> (f64, f64) {
         let (x, y, z) = point;
         
