@@ -1,26 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
-
-
 use std::process::Command;
 use rand::Rng;
 use crossterm::{cursor, execute, style::{Color, Print, ResetColor, SetBackgroundColor}};
 use crossterm::cursor::{DisableBlinking,Hide};
 use terminal_size::{terminal_size, Height, Width};
 use Color::Rgb;
-use serde_json::Value;
 use std::cmp::Ordering;
 
 pub fn real_pixel(x: u16, y: u16, color: Color) {
@@ -66,7 +49,9 @@ pub fn pixel(x: u16, y: u16, color: Color) {
 pub fn fill_row(y: u16, color: Color) {
     //! Fills row of terminal with a specific color
     //! -----
-    //! Utilizing the [pixel][pixel] function
+    //! ```fill_row(5, Rgb { r: (255), g: (255), b: (255) });```
+    //! 
+    //! Utilizing the [pixel][pixel] function to draw a row of pixels.
     let size = terminal_size();
     if let Some((Width(w), Height(_))) = size {
         let width = w;
@@ -77,13 +62,15 @@ pub fn fill_row(y: u16, color: Color) {
         println!("Unable to get terminal size");
         return;
     }
-
-    
-    
 }
 
 
 pub fn fill_colum(x: u16, color: Color){
+    //! Fills row of terminal with a specific color
+    //! -----
+    //! ```fill_colum(5, Rgb { r: (255), g: (255), b: (255) });```
+    //! 
+    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
     
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
@@ -100,6 +87,11 @@ pub fn fill_colum(x: u16, color: Color){
 }
 
 pub fn fill_screen(color: Color){
+    //! Fills the screen of the terminal with a specific color
+    //! -----
+    //! ```fill_screen(Rgb { r: (255), g: (255), b: (255) });```
+    //! 
+    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
         for y in 0..h {
@@ -113,6 +105,9 @@ pub fn fill_screen(color: Color){
 
 
 pub fn screen_test(){
+    //! Fills the screen with random colors.
+    //! -----
+    //! ```screen_test()```
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
         let height = h;
@@ -140,7 +135,12 @@ pub fn screen_test(){
     }
 }
 
-pub fn row_test(){
+pub fn row_test(y:u16){
+    //! Fills row of terminal with random colors
+    //! -----
+    //! ```fill_row(5);```
+    //! 
+    //! Utilizing the [pixel][pixel] function to draw a row of pixels.
 
     let size = terminal_size();
     if let Some((Width(w), Height(_h))) = size {
@@ -150,7 +150,7 @@ pub fn row_test(){
             let random_r: u8 = rng.gen_range(0..=255);
             let random_g: u8 = rng.gen_range(0..=255);
             let random_b: u8 = rng.gen_range(0..=255);
-            pixel(x, 0, Rgb { r: (random_r), g: (random_g), b: (random_b) });
+            pixel(x, y, Rgb { r: (random_r), g: (random_g), b: (random_b) });
     }
     } else {
         println!("Unable to get terminal size");
@@ -161,6 +161,13 @@ pub fn row_test(){
 
 }
 
+/*
+* NOTICE ABOUT THE CENTER TRAIT
+* The center trait is currently under construction. It's intent is to center the rendered image.
+*
+* At this time, feel free to use .center() in your scripts, but keep in mind that it's functionality will change. 
+*
+*/
 pub trait Center {
     fn center_x(&self, array: &[i64]) -> i64;
     fn center_y(&self, array: &[i64]) -> i64;
@@ -172,7 +179,7 @@ pub trait FCenter {
 }
 
 impl Center for i64 {
-    fn center_x(&self, array: &[i64]) -> i64 {
+     fn center_x(&self, array: &[i64]) -> i64 {
         let size = terminal_size();
         if let Some((Width(w), _)) = size {
             let range = match (array.iter().max(), array.iter().min()) {
@@ -186,7 +193,7 @@ impl Center for i64 {
         }
     }
 
-    fn center_y(&self, array: &[i64]) -> i64 {
+     fn center_y(&self, array: &[i64]) -> i64 {
         let size = terminal_size();
         if let Some((_, Height(h))) = size {
             let range = match (array.iter().max(), array.iter().min()) {
@@ -200,7 +207,6 @@ impl Center for i64 {
         }
     }
 }
-
 
 impl FCenter for f64 {
     fn fcenter_x(&self, array: &[f64]) -> f64 {
@@ -236,81 +242,102 @@ impl FCenter for f64 {
 
 
 pub fn clear(){
+    //! clears the terminal
+    //! -----
+    //! 
     let _ = Command::new("clear").status();
 }
 
-pub fn d2_map(json_str: &str, centered: bool) {
-    //! Maps out set values in a 
-    if let Ok(v) = serde_json::from_str::<Value>(json_str) {
-        if let Some(vert) = v["object1"]["Vert"].as_object() {
-            let count = vert.len();
+pub fn d2_map(cords: &[(f64, f64)]) {
+    //! Maps out set values in a 2D space
 
-            let mut first_numbers = Vec::new();
-            let mut second_numbers = Vec::new();
+    let count = cords.len();
 
-            for (_, arr) in vert.iter() {
-                if let Some(numbers) = arr.as_array() {
-                    if let (Some(first), Some(second)) = (
-                        numbers.get(0).and_then(|v| v.as_i64()),
-                        numbers.get(1).and_then(|v| v.as_i64()),
-                    ) {
-                        first_numbers.push(first);
-                        second_numbers.push(second);
-                    }
-                }
-            }
+    let mut first_numbers = Vec::new();
+    let mut second_numbers = Vec::new();
 
-            for i in 0..count {
-                let mut x = (first_numbers[i]).try_into().unwrap();
-                let mut y = (second_numbers[i]).try_into().unwrap();
-
-                if centered {
-                    x = first_numbers[i].center_x(&first_numbers).try_into().unwrap();
-                    y = second_numbers[i].center_y(&second_numbers).try_into().unwrap();
-                }
-                else{
-                    x = (first_numbers[i] +1).try_into().unwrap();
-                    y = (second_numbers[i] +1).try_into().unwrap();
-                }
-
-                pixel(x, y, Rgb { r: (100), g: (100), b: (255) });
-            }
-        }
-        else{
-            clear();
-            print!("object1 Vert is not an object");
-        }
+    for &(first, second) in cords.iter() {
+        first_numbers.push(first);
+        second_numbers.push(second);
     }
 
+    for i in 0..count {
+        let x;
+        let y;
+
+        x = (first_numbers[i] + 1.0).floor() as u16;
+        y = (second_numbers[i] + 1.0).floor() as u16;
+
+        pixel(x, y, Rgb { r: 100, g: 100, b: 255 });
+    }
 }
 
-pub fn d2_path(a_x: f64, a_y: f64, b_x: f64, b_y: f64, color: Color, centered: bool) {
-    let distance = ((b_x - a_x).powi(2) + (b_y - a_y).powi(2)).sqrt();
 
-    let steps = 10000; // Adjust this value for smoother or rougher drawing
+pub fn d2_path(points: &[((f64,f64),(f64,f64))], color: Color) {
+    //! Draws a 2d line on the terminal
+    //! -----
+    //! d2_path(points: &[((1,0,1.0),(5.0,5.0)),((5,0,5.0),(2.0,5.0))])
 
-    let step_size = distance / steps as f64;
-
-    let steps_x = (b_x - a_x) / distance * step_size;
-    let steps_y = (b_y - a_y) / distance * step_size;
-
-    if centered {
-        pixel(a_x.fcenter_x(&[a_x, b_x]) as u16, a_y.fcenter_y(&[a_y, b_y]) as u16, color);
-    } else {
+    for points in points{
+        let a_x = points.0.0;
+        let a_y = points.0.1;
+    
+        let b_x = points.1.0;
+        let b_y = points.1.1;
+    
+    
+        let distance = ((b_x - a_x).powi(2) + (b_y - a_y).powi(2)).sqrt();
+    
+        let min_steps = 1000; 
+        let max_steps = 100000; 
+        let min_distance = 10.0; 
+        let max_distance = 100.0; 
+        
+        let steps = ((distance - min_distance) / (max_distance - min_distance) * ((max_steps - min_steps) as f64) + (min_steps as f64)) as usize;
+        
+        
+        let step_size = distance / steps as f64;
+    
+        let steps_x = (b_x - a_x) / distance * step_size;
+        let steps_y = (b_y - a_y) / distance * step_size;
+        
+        
         pixel(a_x as u16, a_y as u16, color);
-    }
-
-    let mut current_point = (a_x, a_y);
-
-    for _ in 0..steps {
-        current_point.0 += steps_x;
-        current_point.1 += steps_y;
-
-        if centered {
-            pixel(current_point.0.fcenter_x(&[a_x, b_x]) as u16, current_point.1.fcenter_y(&[a_y, b_y]) as u16, color);
-        } else {
+        
+    
+        let mut current_point = (a_x, a_y);
+    
+        for _ in 0..steps {
+            current_point.0 += steps_x;
+            current_point.1 += steps_y;
             pixel(current_point.0 as u16, current_point.1 as u16, color);
         }
     }
-    
+}
+
+
+struct Camera {
+    position: (f64, f64, f64),
+    direction: (f64, f64, f64),
+    fov: f64, // Field of view in degrees
+}
+
+impl Camera {
+    fn project_point(&self, point: (f64, f64, f64)) -> (f64, f64) {
+        let (x, y, z) = point;
+        
+        let relative_x = x - self.position.0;
+        let relative_y = y - self.position.1;
+        let relative_z = z - self.position.2;
+        
+        // Calculate the dot product of the direction vector and the vector from the camera to the point
+        let dot_product = self.direction.0 * relative_x + self.direction.1 * relative_y + self.direction.2 * relative_z;
+        
+        // Apply perspective projection
+        let projected_x = (self.fov / 2.0).tan() * relative_x / dot_product;
+        let projected_y = (self.fov / 2.0).tan() * relative_y / dot_product;
+        
+        // Return the projected 2D coordinates
+        (projected_x, projected_y)
+    }
 }
