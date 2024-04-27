@@ -2,6 +2,12 @@
 name = "trender"
 version = "0.0.1"
 edition = "2021"
+license = "LICENCE"
+description = "Simple graphics library for the terminal"
+homepage = "https://github.com/Forged-Dyslexic/trender"
+documentation = "https://github.com/Forged-Dyslexic/trender/wiki"
+repository = "https://github.com/Forged-Dyslexic/trender"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
