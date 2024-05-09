@@ -252,7 +252,6 @@ pub fn clear(){
 
 pub fn d2_map(cords: &[(f64, f64)]) {
     //! Maps out set values in a 2D space
-
     let count = cords.len();
 
     let mut first_numbers = Vec::new();
@@ -322,6 +321,7 @@ pub fn d2_path(points: &[((f64,f64),(f64,f64))], color: Color) {
 
 struct Camera {
     // This portion of Trender is still Underconstruction.
+    // Please do not use untill Trender version 0.1.0 as this is when I will release the 3d renderer
     position: (f64, f64, f64),
     direction: (f64, f64, f64),
     fov: f64, // Field of view in degrees
