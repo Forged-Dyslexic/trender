@@ -1,6 +1,9 @@
 //! This is a simple(ish) graphics library that runs in the terminal.
+//! Repository: https://github.com/Forged-Dyslexic/Trender
+//! Author: https://github.com/QuantumLoopHole
+
 #![allow(warnings)]
-use crossterm::cursor::{DisableBlinking, Hide};
+use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, Show};
 use crossterm::{
     cursor, execute,
     style::{Color, Print, ResetColor, SetBackgroundColor},
@@ -8,20 +11,61 @@ use crossterm::{
 use rand::Rng;
 use std::cmp::Ordering;
 use std::process::Command;
+use std::thread;
+use std::time::Duration;
 use terminal_size::{terminal_size, Height, Width};
 use Color::Rgb;
 
 //testing
 #[cfg(test)] // Conditional compilation: only compile tests when testing
 mod tests {
+    use std::{
+        thread::{self, sleep},
+        time,
+    };
+
     use serde_json::to_string;
 
     use super::*; // Bring the outer module's items into scope
 
     #[test]
-    fn dimentions_test() {
-        println!("dimentions: ");
+    fn test() {
+        clear();
+
+        real_cell(1, 1, Color::DarkBlue);
+        real_cell(0, 1, Color::Red);
+        thread_sleep_mil(100);
+        clear();
+
+        cell(1, 1, Color::DarkBlue);
+        cell(2, 1, Color::Red);
+        cell(2, 2, Color::DarkBlue);
+        cell(3, 2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+
+        fill_row_cell(1, Color::DarkBlue);
+        fill_row_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+
+        fill_colum_real_cell(1, Color::DarkBlue);
+        fill_colum_real_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+
+        fill_colum_cell(1, Color::DarkBlue);
+        fill_colum_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+
+        show_curser();
     }
+}
+
+pub fn show_curser() {
+    let mut stdout = std::io::stdout();
+    execute!(stdout, Show).unwrap();
 }
 
 pub fn real_cell(x: u16, y: u16, color: Color) {
@@ -68,6 +112,7 @@ pub fn cell(x: u16, y: u16, color: Color) {
 pub fn fill_row_cell(y: u16, color: Color) {
     //! Fills row of terminal with a specific color
     //! -----
+    //! Dosent need a real_cell function as this already covers both
     //! ```fill_row(5, Rgb { r: (255), g: (255), b: (255) });```
     //!
     //! Utilizing the [pixel][pixel] function to draw a row of pixels.
@@ -84,10 +129,10 @@ pub fn fill_row_cell(y: u16, color: Color) {
     }
 }
 
-pub fn fill_colum_cell(x: u16, color: Color) {
+pub fn fill_colum_real_cell(x: u16, color: Color) {
     //! Fills row of terminal with a specific color
     //! -----
-    //! ```fill_colum(5, Rgb { r: (255), g: (255), b: (255) });```
+    //! ```fill_colum_cell(5, Rgb { r: (255), g: (255), b: (255) });```
     //!
     //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
 
@@ -103,10 +148,24 @@ pub fn fill_colum_cell(x: u16, color: Color) {
     }
 }
 
+pub fn fill_colum_cell(x: u16, color: Color) {
+    //! Fills row of terminal with a specific color
+    //! -----
+    //! ```fill_colum_cell(5, Rgb { r: (255), g: (255), b: (255) });```
+    //!
+    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
+
+    let doubled_x = x.checked_mul(2).unwrap_or(u16::MAX);
+    let first_pixel_x = doubled_x.checked_sub(1).unwrap_or(0);
+    let second_pixel_x = doubled_x;
+    fill_colum_real_cell(first_pixel_x, color);
+    fill_colum_real_cell(second_pixel_x, color);
+}
+
 pub fn fill_screen_cell(color: Color) {
     //! Fills the screen of the terminal with a specific color
     //! -----
-    //! ```fill_screen(Rgb { r: (255), g: (255), b: (255) });```
+    //! ```fill_screen_cell(Rgb { r: (255), g: (255), b: (255) });```
     //!
     //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
 
@@ -358,6 +417,12 @@ pub fn d2_path(points: &[((f64, f64), (f64, f64))], color: Color) {
             cell(current_point.0 as u16, current_point.1 as u16, color);
         }
     }
+}
+
+// Just some ease of use functionality
+
+fn thread_sleep_mil(mills: u64) {
+    thread::sleep(Duration::from_millis(mills));
 }
 
 // Hope for 3d rendering. everything here is probably not working so dont expect much
