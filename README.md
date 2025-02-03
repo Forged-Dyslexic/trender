@@ -19,8 +19,6 @@
   - [Utility Functions](#utility-functions)
   - [Centering Traits](#centering-traits)
 - [Testing](#testing)
-- [Future Work](#future-work)
-- [License](#license)
 
 ---
 
