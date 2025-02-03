@@ -112,9 +112,7 @@ fn main() {
 ```
 # API Reference
 ## Basic Drawing Functions
-```
-    real_cell(x: u16, y: u16, color: Color)
-```
+```real_cell(x: u16, y: u16, color: Color)```
 Moves the cursor to the given (x, y) position and draws a “real” pixel (a terminal cell filled with the specified background color). It uses crossterm commands to change colors, disable blinking, and hide the cursor.
 
 ```cell(x: u16, y: u16, color: Color)```
