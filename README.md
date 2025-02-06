@@ -30,15 +30,20 @@ Add Trender to your project by updating your `Cargo.toml`:
 [dependencies]
 trender = "0.0.2"
 ```
+
 Or install via Cargo directly:
+
 ``` sh
 cargo add trender
 ```
+
 # Usage Examples
+
 ## Drawing a Real Pixel
 
 The fundamental drawing primitive in Trender is the real pixel, drawn using real_cell(). Because terminals display characters as rectangles, this function sets the background color for a single character cell.
-```
+
+``` rs
 use crossterm::style::Color;
 use trender::real_cell;
 
@@ -47,10 +52,12 @@ fn main() {
     real_cell(10, 5, Color::Blue);
 }
 ```
+
 ## Drawing a Square Pixel
 
 Since terminal cells are rectangular, the cell() function draws two adjacent real cells so that the result approximates a square pixel.
-```
+
+``` rs
 use crossterm::style::Color;
 use trender::cell;
 
@@ -59,19 +66,21 @@ fn main() {
     cell(1, 1, Color::Red);
 }
 ```
+
 ## Filling Rows and Columns
 
 Trender includes helper functions to fill entire rows, columns, or the whole screen with a specified color:
 
 Fill a Row:
-     ``` fill_row_cell(y, color) fills the given row by drawing square pixels across the terminal width.```
+     ```fill_row_cell(y, color) fills the given row by drawing square pixels across the terminal width.```
 Fill a Column:
-   ``` fill_colum_cell(x, color) fills the given column by drawing pixels vertically.```
+   ```fill_colum_cell(x, color) fills the given column by drawing pixels vertically.```
     Fill the Screen:
 ```fill_screen_cell(color) uses the terminal size to cover the entire screen.```
 
 Example:
-```
+
+``` rs
 use crossterm::style::Color;
 use trender::{fill_row_cell, fill_screen_cell, clear};
 use std::thread;
@@ -87,10 +96,12 @@ fn main() {
     fill_screen_cell(Color::Rgb { r: 230, g: 230, b: 250 });
 }
 ```
+
 ## Screen and Path Tests
 
 Trender also provides functions like screen_test_cell() to fill the screen with random colors and d2_path() to draw a line between points. These are useful for testing and demonstrating dynamic graphics.
-```
+
+``` rs
 use trender::screen_test_cell;
 
 fn main() {
@@ -98,8 +109,10 @@ fn main() {
     screen_test_cell();
 }
 ```
+
 For drawing a 2D path between points:
-```
+
+``` rs
 use crossterm::style::Color;
 use trender::d2_path;
 
@@ -110,8 +123,11 @@ fn main() {
     d2_path(&points, Color::Green);
 }
 ```
+
 # API Reference
+
 ## Basic Drawing Functions
+
 ```real_cell(x: u16, y: u16, color: Color)```
 Moves the cursor to the given (x, y) position and draws a “real” pixel (a terminal cell filled with the specified background color). It uses crossterm commands to change colors, disable blinking, and hide the cursor.
 
@@ -153,15 +169,14 @@ Testing
 
 Trender includes several test functions (compiled only when testing via the #[cfg(test)] attribute):
 
-    ```real_cell_test()```
-    Tests drawing individual real cells at specific positions.
-    ```cell_test()```
-    Tests the square pixel drawing function.
-    ``fill_row_cell_test()`` and ``fill_colum_cell_test()``
-    Verify that entire rows or columns are properly filled.
+  ```real_cell_test()```
+  Tests drawing individual real cells at specific positions.
+  ```cell_test()```
+  Tests the square pixel drawing function.
+  ``fill_row_cell_test()`` and ``fill_colum_cell_test()``
+  Verify that entire rows or columns are properly filled.
 
 These tests clear the terminal before drawing and pause briefly (using thread_sleep_mil) so that you can observe the output during development.
 Future Work
 
-    
 License: MIT

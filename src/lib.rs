@@ -2,83 +2,50 @@
 //! Repository: https://github.com/Forged-Dyslexic/Trender
 //! Author: https://github.com/QuantumLoopHole
 
-#![allow(warnings)]
-use crossterm::cursor::{DisableBlinking, EnableBlinking, Hide, Show};
+#![allow(clippy::type_complexity)]
+
+use crossterm::cursor::{DisableBlinking, Hide, Show};
 use crossterm::{
     cursor, execute,
     style::{Color, Print, ResetColor, SetBackgroundColor},
 };
-use rand::Rng;
+use rand::{rng, Rng};
 use std::cmp::Ordering;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
 use terminal_size::{terminal_size, Height, Width};
-use Color::Rgb;
 
-//testing
-#[cfg(test)] // Conditional compilation: only compile tests when testing
-mod tests {
-    use std::{
-        thread::{self, sleep},
-        time,
-    };
-
-    use serde_json::to_string;
-
-    use super::*; // Bring the outer module's items into scope
-
-    #[test]
-    fn test() {
-        clear();
-
-        real_cell(1, 1, Color::DarkBlue);
-        real_cell(0, 1, Color::Red);
-        thread_sleep_mil(100);
-        clear();
-
-        cell(1, 1, Color::DarkBlue);
-        cell(2, 1, Color::Red);
-        cell(2, 2, Color::DarkBlue);
-        cell(3, 2, Color::Red);
-        thread_sleep_mil(500);
-        clear();
-
-        fill_row_cell(1, Color::DarkBlue);
-        fill_row_cell(2, Color::Red);
-        thread_sleep_mil(500);
-        clear();
-
-        fill_colum_real_cell(1, Color::DarkBlue);
-        fill_colum_real_cell(2, Color::Red);
-        thread_sleep_mil(500);
-        clear();
-
-        fill_colum_cell(1, Color::DarkBlue);
-        fill_colum_cell(2, Color::Red);
-        thread_sleep_mil(500);
-        clear();
-
-        show_curser();
-    }
+/// Creates an RGB color.
+///
+/// # Examples
+///
+/// ``` e
+/// let blue = trender::rgb(0, 0, 255);
+/// ```
+///
+pub fn rgb(r: u8, g: u8, b: u8) -> Color {
+    Color::Rgb { r, g, b }
 }
 
+/// Shows the cursor in the terminal.
 pub fn show_curser() {
     let mut stdout = std::io::stdout();
     execute!(stdout, Show).unwrap();
 }
 
+/// Draws a "real" pixel in the terminal.
+///
+/// Because the terminal primarily uses text, modifying the "character slot"
+/// results in a vertical rectangle. This function sets a background color in
+/// a single terminal cell, effectively acting as a pixel.
+///
+/// # Examples
+///
+/// ```
+/// trender::real_cell(1, 1, trender::rgb(0, 0, 255));
+/// ```
 pub fn real_cell(x: u16, y: u16, color: Color) {
-    //! Draw a "real" pixel
-    //!
-    //! Because the terminal primarily uses text, modifying the "character slot" (or whatever it is called) results in a vertical rectangle. I call this a real pixel.
-    //!
-    //! To draw a blue real pixel: ```draw::real_pixel```
-    //!
-    //! This is the base of the whole graphics system for now. I will be working on a way to get more definition in the terminal.
-    //! I am looking into custom characters.
-    //!
-
     execute!(
         std::io::stdout(),
         cursor::MoveTo(x, y),
@@ -91,32 +58,34 @@ pub fn real_cell(x: u16, y: u16, color: Color) {
     .unwrap();
 }
 
+/// Draws a square pixel on the terminal.
+///
+/// The terminal uses rectangular "pixels" which results in the need to draw two
+/// adjacent cells to simulate a square.
+///
+/// # Examples
+///
+/// ```
+/// // Draws a red square pixel at position (1,1)
+/// trender::cell(1, 1, Color::Red);
+/// ```
 pub fn cell(x: u16, y: u16, color: Color) {
-    //! Draw a square pixel on the terminal
-    //! -----
-    //! The terminal uses rectangular "pixels" which results in the need to draw 2 rectangles side by side to create a square.
-    //! To make a custom RGB value, use ```Rgb(r,g,b)```
-    //!
-    //! for example:
-    //!
-    //! ```draw::pixel(1,1, Rgb {255, 0, 0});``` for a perfect **RED**
-
     let doubled_x = x.checked_mul(2).unwrap_or(u16::MAX);
-    let first_pixel_x = doubled_x.checked_sub(1).unwrap_or(0);
+    let first_pixel_x = doubled_x.saturating_sub(1);
     let second_pixel_x = doubled_x;
 
     real_cell(first_pixel_x, y, color);
     real_cell(second_pixel_x, y, color);
 }
 
+/// Fills an entire row of the terminal with a specific color.
+///
+/// # Examples
+///
+/// ```
+/// trender::fill_row_cell(5, trender::rgb(255, 255, 255));
+/// ```
 pub fn fill_row_cell(y: u16, color: Color) {
-    //! Fills row of terminal with a specific color
-    //! -----
-    //! Dosent need a real_cell function as this already covers both
-    //! ```fill_row(5, Rgb { r: (255), g: (255), b: (255) });```
-    //!
-    //! Utilizing the [pixel][pixel] function to draw a row of pixels.
-
     let size = terminal_size();
     if let Some((Width(w), Height(_))) = size {
         let width = w;
@@ -125,50 +94,50 @@ pub fn fill_row_cell(y: u16, color: Color) {
         }
     } else {
         println!("Unable to get terminal size");
-        return;
     }
 }
 
+/// Fills a column of the terminal with a specific color using "real" cells.
+///
+/// # Examples
+///
+/// ```
+/// trender::fill_colum_real_cell(5, trender::rgb(255, 255, 255));
+/// ```
 pub fn fill_colum_real_cell(x: u16, color: Color) {
-    //! Fills row of terminal with a specific color
-    //! -----
-    //! ```fill_colum_cell(5, Rgb { r: (255), g: (255), b: (255) });```
-    //!
-    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
-
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
-        let height = h;
-        for y in 0..height {
+        for y in 0..h {
             real_cell(x, y, color);
         }
     } else {
         println!("Unable to get terminal size");
-        return;
     }
 }
 
+/// Fills a column of the terminal with a specific color using square pixels.
+///
+/// # Examples
+///
+/// ```
+/// trender::fill_colum_cell(5, trender::rgb(255, 255, 255));
+/// ```
 pub fn fill_colum_cell(x: u16, color: Color) {
-    //! Fills row of terminal with a specific color
-    //! -----
-    //! ```fill_colum_cell(5, Rgb { r: (255), g: (255), b: (255) });```
-    //!
-    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
-
     let doubled_x = x.checked_mul(2).unwrap_or(u16::MAX);
-    let first_pixel_x = doubled_x.checked_sub(1).unwrap_or(0);
+    let first_pixel_x = doubled_x.saturating_sub(1);
     let second_pixel_x = doubled_x;
     fill_colum_real_cell(first_pixel_x, color);
     fill_colum_real_cell(second_pixel_x, color);
 }
 
+/// Fills the entire terminal screen with a specific color.
+///
+/// # Examples
+///
+/// ```
+/// trender::fill_screen_cell(trender::rgb(0, 0, 0));
+/// ```
 pub fn fill_screen_cell(color: Color) {
-    //! Fills the screen of the terminal with a specific color
-    //! -----
-    //! ```fill_screen_cell(Rgb { r: (255), g: (255), b: (255) });```
-    //!
-    //! Utilizing the [pixel][pixel] function to draw a colum of pixels.
-
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
         for y in 0..h {
@@ -176,35 +145,27 @@ pub fn fill_screen_cell(color: Color) {
         }
     } else {
         println!("Unable to get terminal size");
-        return;
     }
 }
 
+/// Fills the screen with random colors.
+///
+/// # Examples
+///
+/// ```
+/// trender::screen_test_cell();
+/// ```
 pub fn screen_test_cell() {
-    //! Fills the screen with random colors.
-    //! -----
-    //! ```screen_test()```
     let size = terminal_size();
     if let Some((Width(_), Height(h))) = size {
-        let height = h;
-
-        for y in 1..height {
+        for y in 1..h {
             if let Some((Width(w), Height(_))) = size {
-                let width = w;
-                for x in 1..(width / 2) {
-                    let mut rng = rand::thread_rng();
-                    let random_r: u8 = rng.gen_range(0..=255);
-                    let random_g: u8 = rng.gen_range(0..=255);
-                    let random_b: u8 = rng.gen_range(0..=255);
-                    cell(
-                        x,
-                        y,
-                        Rgb {
-                            r: (random_r),
-                            g: (random_g),
-                            b: (random_b),
-                        },
-                    );
+                for x in 1..(w / 2) {
+                    let mut rng = rng();
+                    let random_r: u8 = rng.random_range(0..=255);
+                    let random_g: u8 = rng.random_range(0..=255);
+                    let random_b: u8 = rng.random_range(0..=255);
+                    cell(x, y, rgb(random_r, random_g, random_b));
                 }
             } else {
                 println!("Unable to get terminal size");
@@ -213,59 +174,80 @@ pub fn screen_test_cell() {
         }
     } else {
         println!("Unable to get terminal size");
-        return;
     }
 }
 
+/// Fills a specific row of the terminal with random colors.
+///
+/// # Examples
+///
+/// ```
+/// trender::row_test_cell(5);
+/// ```
 pub fn row_test_cell(y: u16) {
-    //! Fills row of terminal with random colors
-    //! -----
-    //! ```fill_row(5);```
-    //!
-    //! Utilizing the [pixel][pixel] function to draw a row of pixels.
-
     let size = terminal_size();
     if let Some((Width(w), Height(_h))) = size {
-        let width = w;
-        for x in 0..(width / 2) {
-            let mut rng = rand::thread_rng();
-            let random_r: u8 = rng.gen_range(0..=255);
-            let random_g: u8 = rng.gen_range(0..=255);
-            let random_b: u8 = rng.gen_range(0..=255);
-            cell(
-                x,
-                y,
-                Rgb {
-                    r: (random_r),
-                    g: (random_g),
-                    b: (random_b),
-                },
-            );
+        for x in 0..(w / 2) {
+            let mut rng = rng();
+            let random_r: u8 = rng.random_range(0..=255);
+            let random_g: u8 = rng.random_range(0..=255);
+            let random_b: u8 = rng.random_range(0..=255);
+            cell(x, y, rgb(random_r, random_g, random_b));
         }
     } else {
         println!("Unable to get terminal size");
-        return;
     }
 }
 
 /*
 * NOTICE ABOUT THE CENTER TRAIT
-* The center trait is currently under construction. It's intent is to center the rendered image.
+* The center trait is currently under construction. Its intent is to center the rendered image.
 *
-* At this time, feel free to use .center_cell() in your scripts, but keep in mind that it's functionality will change.
-*
+* At this time, feel free to use .center_cell() in your scripts, but keep in mind that its functionality will change.
 */
-pub trait Center_cell {
+/// Centers the given coordinates by adding offsets from the provided `array`.
+///
+/// # Arguments
+///
+/// * `xy` - A tuple-like array `[x, y]` representing the initial coordinates to be centered.
+///
+/// # Returns
+///
+/// Returns a new array `[centered_x, centered_y]` where the x and y coordinates are adjusted
+/// by the corresponding values from the `array`.
+///
+/// # Example
+///
+/// ```
+/// ```
+pub fn center(xy: [i64; 2]) -> [i64; 2] {
+    let x: i64 = 1; // Init the variables
+    let y: i64 = 1;
+
+    // Get centered coordinates
+    let centered_x = x.center_x_cell(&xy);
+    let centered_y = y.center_y_cell(&xy);
+    // Return the new coordinates
+    [centered_x, centered_y]
+}
+
+/// A trait to provide center functionality for integer values.
+pub trait CenterCell {
+    /// Centers a given array on the x-axis.
     fn center_x_cell(&self, array: &[i64]) -> i64;
+    /// Centers a given array on the y-axis.
     fn center_y_cell(&self, array: &[i64]) -> i64;
 }
 
-pub trait FCenter_cell {
+/// A trait to provide center functionality for floating point values.
+pub trait FCenterCell {
+    /// Centers a given array on the x-axis.
     fn fcenter_x_cell(&self, array: &[f64]) -> f64;
+    /// Centers a given array on the y-axis.
     fn fcenter_y_cell(&self, array: &[f64]) -> f64;
 }
 
-impl Center_cell for i64 {
+impl CenterCell for i64 {
     fn center_x_cell(&self, array: &[i64]) -> i64 {
         let size = terminal_size();
         if let Some((Width(w), _)) = size {
@@ -273,7 +255,7 @@ impl Center_cell for i64 {
                 (Some(max_val), Some(min_val)) => max_val - min_val,
                 _ => 0,
             };
-            (*self + (w / 4) as i64) - (range / 2) as i64 // Adjusted for range
+            (*self + (w / 4) as i64) - (range / 2) // Adjusted for range
         } else {
             println!("Unable to get terminal width");
             *self
@@ -287,7 +269,7 @@ impl Center_cell for i64 {
                 (Some(max_val), Some(min_val)) => max_val - min_val,
                 _ => 0,
             };
-            (*self + (h / 2) as i64) - (range / 2) as i64 // Adjusted for range
+            (*self + (h / 2) as i64) - (range / 2) // Adjusted for range
         } else {
             println!("Unable to get terminal width");
             *self
@@ -295,7 +277,7 @@ impl Center_cell for i64 {
     }
 }
 
-impl FCenter_cell for f64 {
+impl FCenterCell for f64 {
     fn fcenter_x_cell(&self, array: &[f64]) -> f64 {
         let size = terminal_size();
         if let Some((Width(w), _)) = size {
@@ -339,15 +321,26 @@ impl FCenter_cell for f64 {
     }
 }
 
+/// Clears the terminal screen.
+///
+/// # Examples
+///
+/// ```
+/// trender::clear();
+/// ```
 pub fn clear() {
-    //! clears the terminal
-    //! -----
-    //! Call ```clear()``` to wipe the terminal clear!
     let _ = Command::new("clear").status();
 }
 
+/// Maps out 2D coordinates by converting floating-point values to terminal positions.
+///
+/// # Examples
+///
+/// ```
+/// let coords = vec![(0.0, 0.0), (1.5, 2.5)];
+/// trender::d2_map_cell(&coords);
+/// ```
 pub fn d2_map_cell(cords: &[(f64, f64)]) {
-    //! Maps out supert values in a 2D space
     let count = cords.len();
 
     let mut first_numbers = Vec::new();
@@ -359,31 +352,25 @@ pub fn d2_map_cell(cords: &[(f64, f64)]) {
     }
 
     for i in 0..count {
-        let x;
-        let y;
+        let x = (first_numbers[i] + 1.0).floor() as u16;
+        let y = (second_numbers[i] + 1.0).floor() as u16;
 
-        x = (first_numbers[i] + 1.0).floor() as u16;
-        y = (second_numbers[i] + 1.0).floor() as u16;
-
-        cell(
-            x,
-            y,
-            Rgb {
-                r: 100,
-                g: 100,
-                b: 255,
-            },
-        );
+        cell(x, y, rgb(100, 100, 255));
     }
 }
 
+/// Draws a 2D line (path) between pairs of points on the terminal.
+///
+/// The function interpolates points between two endpoints and draws them using the
+/// `cell` function.
+///
+/// # Examples
+///
+/// ```
+/// let points = &[((1.0, 1.0), (10.0, 10.0))];
+/// trender::d2_path(points, trender::rgb(255, 0, 0));
+/// ```
 pub fn d2_path(points: &[((f64, f64), (f64, f64))], color: Color) {
-    //! Draws a 2d line on the terminal
-    //! -----
-    //! This draws a path from 2 points utilizing the pixel function
-    //!
-    //! ```d2_path(points: &[((1,0,1.0),(5.0,5.0)),((5,0,5.0),(2.0,5.0))])```
-
     for points in points {
         let a_x = points.0 .0;
         let a_y = points.0 .1;
@@ -419,40 +406,124 @@ pub fn d2_path(points: &[((f64, f64), (f64, f64))], color: Color) {
     }
 }
 
+// Shapes
+
+/// Draws a square given bottom-left and top-right coordinates with specified line and fill colors.
+///
+/// **Note:** This function is a placeholder and currently does not implement any drawing logic.
+pub fn square(bl: [i32; 2], rt: [i32; 2], line_color: Color, fill_color: Color) {
+    let _a = bl;
+    let _b = rt;
+    let _c = line_color;
+    let _d = fill_color;
+}
+
 // Just some ease of use functionality
 
-fn thread_sleep_mil(mills: u64) {
+/// Sleeps the current thread for a specified number of milliseconds.
+///
+/// # Examples
+///
+/// ```
+/// trender::thread_sleep_mil(100);
+/// ```
+pub fn thread_sleep_mil(mills: u64) {
     thread::sleep(Duration::from_millis(mills));
 }
 
-// Hope for 3d rendering. everything here is probably not working so dont expect much
-struct Camera {
-    // This portion of Trender is still Underconstruction.
-    // Please do not use untill Trender version 0.1.0 as this is when I will release the 3d renderer
-    position: (f64, f64, f64),
-    direction: (f64, f64, f64),
-    fov: f64, // Field of view in degrees
-}
+/// Testing module: Contains tests for the terminal graphics functions.
+#[cfg(test)]
+mod tests {
 
-impl Camera {
-    // This portion of Trender is still Underconstruction.
-    fn project_point(&self, point: (f64, f64, f64)) -> (f64, f64) {
-        let (x, y, z) = point;
+    use super::*;
 
-        let relative_x = x - self.position.0;
-        let relative_y = y - self.position.1;
-        let relative_z = z - self.position.2;
+    /// Test for real_cell and fill_colum_cell functions.
+    #[test]
+    fn real_cell_test() {
+        clear();
 
-        // Calculate the dot product of the direction vector and the vector from the camera to the point
-        let dot_product = self.direction.0 * relative_x
-            + self.direction.1 * relative_y
-            + self.direction.2 * relative_z;
+        real_cell(1, 1, Color::DarkBlue);
+        real_cell(0, 1, Color::Red);
+        thread_sleep_mil(100);
+        clear();
 
-        // Apply perspective projection
-        let projected_x = (self.fov / 2.0).tan() * relative_x / dot_product;
-        let projected_y = (self.fov / 2.0).tan() * relative_y / dot_product;
+        fill_colum_cell(1, Color::DarkBlue);
+        fill_colum_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
 
-        // Return the projected 2D coordinates
-        (projected_x, projected_y)
+        show_curser();
+    }
+
+    /// Test for the cell function.
+    #[test]
+    fn cell_test() {
+        clear();
+        cell(1, 1, Color::DarkBlue);
+        cell(2, 1, Color::Red);
+        cell(2, 2, Color::DarkBlue);
+        cell(3, 2, Color::Red);
+        thread_sleep_mil(1000);
+        clear();
+        show_curser();
+    }
+
+    /// Test for the fill_row_cell function.
+    #[test]
+    fn fill_row_cell_test() {
+        clear();
+        fill_row_cell(1, Color::DarkBlue);
+        fill_row_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+        show_curser();
+    }
+
+    /// Test for the fill_colum_real_cell function.
+    #[test]
+    fn fill_colum_real_cell_test() {
+        clear();
+        fill_colum_real_cell(1, Color::DarkBlue);
+        fill_colum_real_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+        show_curser();
+    }
+
+    /// Test for the fill_colum_cell function.
+    #[test]
+    fn fill_colum_cell_test() {
+        clear();
+        fill_colum_cell(1, Color::DarkBlue);
+        fill_colum_cell(2, Color::Red);
+        thread_sleep_mil(500);
+        clear();
+        show_curser();
+    }
+
+    #[test]
+    fn fill_screen_test() {
+        clear();
+        fill_screen_cell(rgb(255, 255, 255));
+        thread_sleep_mil(500);
+        clear();
+        show_curser();
+    }
+
+    #[test]
+    fn center_test() {
+        println!("{:?}", center([1, 1]));
+    }
+
+    /// Test the centering script
+    #[test]
+    fn center_cell_test() {
+        clear();
+        let centered = center([1, 1]);
+        println!("{:?}", centered);
+        cell(centered[0] as u16, centered[1] as u16, rgb(255, 255, 255));
+        thread_sleep_mil(5000);
+        clear();
+        show_curser();
     }
 }
